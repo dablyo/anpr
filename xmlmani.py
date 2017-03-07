@@ -19,10 +19,11 @@ def walkdir(xmldir,picdir):
             tree=et.parse(os.path.join(parent,filename))
             root=tree.getroot()
             folderelement=tree.find("folder")
+            folderelement.text=picpname
+	        #folderelement.text=picpname
             filenameelement=tree.find("filename")
-            pathelement=tree.find("path")
-	        folderelement.text=picpname  #update folder
             newpathname="{}.jpg".format(str(os.path.join(picdir,filenameelement.text)))
+            pathelement=tree.find("path")
             pathelement.text=newpathname #update path
             tree.write(os.path.join(parent,filename))
             print folderelement.text
