@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+#指定文件名，根据标注文件中的信息截取目标，显示并存储
 import cv2
 import sys
 import os.path

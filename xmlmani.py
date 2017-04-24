@@ -1,6 +1,5 @@
 #!/usr/bin/python
-
-
+#彩色文件灰化后文件名有变化，这里将标注文件名和图像文件名，以及标注文件内的图像文件名一致化
 import sys
 import os
 import os.path
