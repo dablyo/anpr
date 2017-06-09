@@ -1,0 +1,72 @@
+imdb = get_imdb(imdb_name)  通过工厂factory.py基于数据集名称获取处理类
+rdl_roidb.prepare_roidb(imdb)
+roidb = imdb.roidb
+data_layer = RoIDataLayer(roidb, imdb.num_classes)
+
+
+在faster_rcnn.datasets.pascal_voc中设置
+_classes:分类的类型
+_devkit_path/_data_path:数据集路径
+_image_ext:图片扩展名
+_image_index:根据数据集名称(这里是trainval)从$data/ImagesSets/Main/trainval.txt中读取图片名称，不包含路径和扩展名
+_roidb/roidb/roidb_handler:
+           从Annotations下读取数据集参数，list类型，每个成员对应一个图片，成员是dict类型，value是list类型，包括：
+	boxes:list，每个对象的位置x1,y1,x2,y2
+	gt_classes:list,每个对象类型名称对应的索引
+	gt_ishard:list，图片对应annotation的xml文件中每个对象的difficult属性
+	gt_overlaps:list，对象数量x类型数量的二位稀疏矩阵，对象的类型索引位置为1其他为0
+	flipped: list,固定为False  layer.py->forward()-->minibatch.py->_get_image_blob中，
+                                    若为True则im = im[:, ::-1, :]，相当于绿色通道的值逆序了一把/上下颠倒。
+                                    这里应该不仅是绿色通道
+	seg_areas:list,对象区域h*w
+
+在faster_rcnn.roi_data_layer.roidb中继续设置roidb，为作为list的roidb的每个成员(一幅图像，dict类型)增加：
+        image:图像路径
+        width:宽度
+        height:高度
+        max_classes:图片中每个对象的类型索引，即gt_overlaps中为1成员的位置
+        max_overlaps:为1的向量，长度是对象数，这里没看懂有什么用
+
+region proposal network作什么用。zai faster_rcnn.roi_data_layer.layer.py中_get_next_minibatch_inds函数
+在 cfg.TRAIN.HAS_RPN在False时，若图像的对象区域标注数为0/没有标注，则跳过不处理。和理解的相反。
+
+学习循环中，layer的forward函数逐步获取数据
+layer.forward-->layer._get_next_minibatch-->layer._get_next_minibatch_inds()(取得roidb中的图片索引，根据索引获取特定的字典列表dict list，即roidb子集)-->minibatch.get_minibatch
+获取的信息有：
+       data:原图，转为float32数值，减去均值(cfg.PIXEL_MEANS)。util.py->im_list_to_blob中，当前限制single batch only，这里的尺寸归一实际没什么用。配置文件中TRAIN.IMS_PER_BATCH的值就是faster_rcnn.roi_data_laryer.get_mnibatch中的入参roidb中的元素个数。
+     。。。。get_minibatch中，gt_inds = np.where(roidb[0]['gt_classes'] != 0)[0]看不懂
+
+
+
+data/VOCdevkit链接到数据集目录
+experiment/cfgs/faster_rcnn_end2end.yml，
+TRAIN:
+  SCALES: [576,]
+  MAX_SIZE: 1024
+faster_rcnn/datsets/pascal_voc.py
+        self._classes = ('__background__',  # always index 0
+                         '0','1','2','3','4','5','6','7','8','9',
+                         'a','b','c','d','e','f','g',
+                         'h','i','j','k','l','m','n',
+                         'o','p','q','r','s','t','u','v','w','x','y','z')
+faser_rcnn/faster_rcnn.py
+    #n_classes = 21
+    n_classes = 37
+    #classes = np.asarray(['__background__',
+    #                   'aeroplane', 'bicycle', 'bird', 'boat',
+    #                   'bottle', 'bus', 'car', 'cat', 'chair',
+    #                   'cow', 'diningtable', 'dog', 'horse',
+    #                   'motorbike', 'person', 'pottedplant',
+    #                   'sheep', 'sofa', 'train', 'tvmonitor'])
+    classes = np.asarray(['__background__',
+                         '0','1','2','3','4','5','6','7','8','9',
+                         'a','b','c','d','e','f','g',
+                         'h','i','j','k','l','m','n',
+                         'o','p','q','r','s','t','u','v','w','x','y','z'])
+
+    PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
+    #SCALES = (600,)
+    #MAX_SIZE = 1000
+    SCALES = (576,)
+    MAX_SIZE = 1024
+

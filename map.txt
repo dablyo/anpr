@@ -1,0 +1,3 @@
+dict1={'taitianzhi': '5bbdb707', 'false': '6f691f7e', 'heqingsezhi': 'bf81bd1f', 'huangheban': '0151f6ac', 'sezhi': 'a2683c1f', 'queban': 'e598ef8b', 'ture': '85ad5a4c', 'riguangxingheizhi': '13e9e528', 'kafeiban': '3976fbec'}
+dict2={'3976fbec': 'kafeiban', '6f691f7e': 'false', '13e9e528': 'riguangxingheizhi', 'bf81bd1f': 'heqingsezhi', '0151f6ac': 'huangheban', '5bbdb707': 'taitianzhi', 'e598ef8b': 'queban', '85ad5a4c': 'ture', 'a2683c1f': 'sezhi'}
+

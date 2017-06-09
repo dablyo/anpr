@@ -1,0 +1,110 @@
+1.sobel算子，通过垂直线条找车牌
+
+GaussianBlurSize=5
+
+PICFILE='/home/wang/git/nppic/su_np_color/20170220_141247.jpg'
+img=cv2.imread(PICFILE)
+img=cv2.resize(img,(int(img.shape[1]/10),int(img.shape[0]/10)))
+imshow(img)
+
+#高斯模糊20170221_141654
+imggauss=cv2.GaussianBlur(img,(3,3),GaussianBlurSize)
+#imshow(imggauss)
+#cv2.imwrite('/home/wang/git/nppic/tt.jpg',imggauss)
+#灰度化
+imggray=cv2.cvtColor(imggauss,cv2.COLOR_BGR2GRAY)
+print imggray.shape
+imshow(imggray)
+
+
+#Sobel运算  http://blog.csdn.net/sunny2038/article/details/9170013
+#dst = cv2.Sobel(src, ddepth, dx, dy[, dst[, ksize[, scale[, delta[, borderType]]]]])  
+#前四个是必须的参数：
+#第一个参数是需要处理的图像；
+#第二个参数是图像的深度，-1表示采用的是与原图像相同的深度。目标图像的深度必须大于等于原图像的深度；
+#dx和dy表示的是求导的阶数，0表示这个方向上没有求导，一般为0、1、2。
+#其后是可选的参数：
+#dst不用解释了；
+#ksize是Sobel算子的大小，必须为1、3、5、7。
+#scale是缩放导数的比例常数，默认情况下没有伸缩系数；
+#delta是一个可选的增量，将会加到最终的dst中，同样，默认情况下没有额外的值加到dst中；
+#borderType是判断图像边界的模式。这个参数默认值为cv2.BORDER_DEFAULT
+
+#常量SOBEL_X_WEIGHT与SOBEL_Y_WEIGHT代表水平方向和垂直方向的权值，
+#              默认
+imgsobel=cv2.Sobel(imggray,ddepth=-1,dx=1,dy=0,ksize=3)  #dxdy前者1后者0，代表仅做水平方向求导不做垂直方向求导
+print imgsobel.shape
+imshow(imgsobel)
+cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgsobel)
+
+
+#二值化
+_,imgthreshold  = cv2.threshold(imgsobel, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY) #二值化
+print imgthreshold.shape
+imshow(imgthreshold)
+cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgthreshold)
+
+#闭操作
+print imgthreshold.shape
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(17,5)) #(7,3)闭操作，先膨胀再腐蚀
+imgclose=cv2.morphologyEx(imgthreshold, cv2.MORPH_CLOSE, kernel)
+##eroded = cv2.erode(imgt,kernel)
+#imclose = cv2.dilate(imgthreshold,kernel)
+print imgclose.shape
+imshow(imgclose)
+cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgclose)
+
+
+
+#imger=imgclose.copy()
+#eroded = cv2.erode(imger,kernel)
+#imshow(eroded)
+
+
+#imgdi = eroded.copy()
+#dilated=cv2.dilate(imgdi,kernel)
+#imshow(dilated)
+
+
+#求轮廓
+imgcont=np.copy(dilated)
+(contours,_) = cv2.findContours(imgcont,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+#cv2.drawContours(imgcont,contours,-1,(0,0,255),2)
+imshow(imgcont)
+cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgcont)
+#imshow(imgclose)
+#for c in contours:
+#    if cv2.contourArea(c)
+
+
+#对轮廓求最小外接矩形，然后验证，不满足条件的淘汰
+imgc=imgclose
+con=sorted(contours,key=cv2.contourArea,reverse=True)            
+ret=[]
+print len(con)
+for i,c in enumerate(con):
+    if len(c) < 4:
+        continue
+    x,y,w,h=cv2.boundingRect(c)
+    #ratio=w//h
+    #if ratio>8 or ratio < 4:
+    #    continue
+    if w< 40 or h < 15:
+        continue
+    ret.append((x,y,w,h))
+    #rect=cv2.minAreaRect(c)
+    #box = np.int0(cv2.cv.BoxPoints(rect))
+    #cv2.drawContours(imgc,[box],-1, (0, 0, 255), 3)
+#imshow(imgc)
+#cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgc)
+print len(ret)
+#角度判断与旋转
+#暂无
+
+
+imgrect=img
+for _,r in enumerate(ret):
+    x,y,w,h=r
+    cv2.rectangle(imgrect,(x,y),(x+w,y+h),(0,0,255),3)
+imshow(imgrect)    
+cv2.imwrite('/home/wang/git/nppic/tt.jpg',imgrect)
